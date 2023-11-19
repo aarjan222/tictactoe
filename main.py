@@ -1,3 +1,5 @@
+# Tic Tac Toe Game in Python
+
 board = [' ' for x in range(10)]
 
 
@@ -50,41 +52,64 @@ def playerMove():
             else:
                 print('Please type a number within the range!')
         except:
-            print('Pleas type a number!')
+            print('Please type a number!')
+
+
+def checkWinner():
+    a = isWinner(board, 'X')
+    b = isWinner(board, 'O')
+    if a:
+        return 'X'
+    elif b:
+        return 'O'
+    elif isBoardFull(board):
+        return 'tie'
+
+
+def minimax(board, depth, isMaximizing):
+
+    winner = checkWinner()
+    if winner is not None:
+        return 1 if winner == 'O' else -1 if winner == 'X' else 0
+
+    if isMaximizing:
+        bestScore = float('-inf')
+        for i in range(len(board)):
+            if spaceIsFree(i):
+                insertLetter('O', i)
+                score = minimax(board, depth+1, False)
+                insertLetter(' ', i)
+                bestScore = max(score, bestScore)
+
+        return bestScore
+    else:
+        bestScore = float('inf')
+        for i in range(len(board)):
+            if spaceIsFree(i):
+                insertLetter('X', i)
+                score = minimax(board, depth+1, True)
+                insertLetter(' ', i)
+                bestScore = min(score, bestScore)
+
+        return bestScore
 
 
 def compMove():
     possibleMoves = [x for x, letter in enumerate(
         board) if letter == ' ' and x != 0]
-    move = 0
 
-    for let in ['O', 'X']:
-        for i in possibleMoves:
-            boardCopy = board[:]
-            boardCopy[i] = let
-            if isWinner(boardCopy, let):
-                move = i
-                return move
+    bestMove = -1
+    bestScore = float('-inf')
 
-    cornersOpen = []
     for i in possibleMoves:
-        if i in [1, 3, 7, 9]:
-            cornersOpen.append(i)
-    if len(cornersOpen) > 0:
-        move = selectRandom(cornersOpen)
-        return move
+        insertLetter('O', i)
+        score = minimax(board, 0, False)
+        insertLetter(' ', i)
+        if score is not None and score > bestScore:
+            bestScore = score
+            bestMove = i
 
-    if 5 in possibleMoves:
-        move = 5
-        return move
-
-    edgesOpen = []
-    for i in possibleMoves:
-        if i in [2, 4, 6, 8]:
-            edgesOpen.append(i)
-    if len(edgesOpen) > 0:
-        move = selectRandom(edgesOpen)
-    return move
+    return bestMove
 
 
 def insertLetter(letter, pos):
@@ -103,6 +128,8 @@ def isBoardFull(board):
         return True
 
 
+# computer = 0
+# user = X
 def main():
     print('Welcome to TIC TAC TOE!')
     printBoard(board)
@@ -112,12 +139,12 @@ def main():
             playerMove()
             printBoard(board)
         else:
-            print('Sorry, O\'s won this time!')
+            print('Sorry, computer(AI)\'s won this time!')
             break
 
         if not (isWinner(board, 'X')):
             move = compMove()
-            if move == 0:
+            if move == -1:
                 print('Tie Game!')
             else:
                 insertLetter('O', move)
@@ -131,6 +158,4 @@ def main():
         print('Game Tied!')
 
 
-while True:
-    input('Play Again?')
-    main()
+main()
