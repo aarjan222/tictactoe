@@ -1,11 +1,7 @@
 # Tic Tac Toe Game in Python
 
 board = [' ' for x in range(10)]
-
-
-def insertBoard(letter, pos):
-    board[pos] = letter
-
+total_visited_states = 0
 
 def spaceIsFree(pos):
     return board[pos] == ' '
@@ -51,7 +47,7 @@ def playerMove():
                     print('Sorry this place is occupied!')
             else:
                 print('Please type a number within the range!')
-        except:
+        except ValueError:
             print('Please type a number!')
 
 
@@ -66,44 +62,56 @@ def checkWinner():
         return 'tie'
 
 
-def minimax(board, depth, isMaximizing):
-
+def minimax(board, depth, alpha, beta, isMaximizing):
+    global total_visited_states
+    total_visited_states += 1
     winner = checkWinner()
     if winner is not None:
         return 1 if winner == 'O' else -1 if winner == 'X' else 0
 
-    if isMaximizing:
-        bestScore = float('-inf')
+    if isMaximizing:  # computer(O)
+        value = float('-inf')
         for i in range(len(board)):
             if spaceIsFree(i):
                 insertLetter('O', i)
-                score = minimax(board, depth+1, False)
+                value = max(value, minimax(board, depth+1, alpha, beta, False))
                 insertLetter(' ', i)
-                bestScore = max(score, bestScore)
+                
+                alpha = max(alpha, value)
+                if value >= beta:
+                    break
 
-        return bestScore
-    else:
-        bestScore = float('inf')
+        return value
+    else:  # player(X)
+        value = float('inf')
         for i in range(len(board)):
             if spaceIsFree(i):
                 insertLetter('X', i)
-                score = minimax(board, depth+1, True)
+                value = min(value, minimax(board, depth+1, alpha, beta, True))
                 insertLetter(' ', i)
-                bestScore = min(score, bestScore)
-
-        return bestScore
+                
+                beta = min(beta, value)
+                if value <= alpha:
+                    break
+                
+        return value
 
 
 def compMove():
+    # get valid remaining moves
     possibleMoves = [x for x, letter in enumerate(
         board) if letter == ' ' and x != 0]
 
     bestMove = -1
     bestScore = float('-inf')
+    a = float('-inf')
+    b = float('inf')
 
     for i in possibleMoves:
+        # fake computer placement in board for knowing the future states
         insertLetter('O', i)
-        score = minimax(board, 0, False)
+        # call to player move by saying False(minimizing player)
+        score = minimax(board, 0, a, b, False)
         insertLetter(' ', i)
         if score is not None and score > bestScore:
             bestScore = score
@@ -131,18 +139,23 @@ def isBoardFull(board):
 # computer = 0
 # user = X
 def main():
+    global total_visited_states
     print('Welcome to TIC TAC TOE!')
     printBoard(board)
 
     while not (isBoardFull(board)):
+        # check if computer has won or not
         if not (isWinner(board, 'O')):
+            # get valid move from player
             playerMove()
             printBoard(board)
         else:
-            print('Sorry, computer(AI)\'s won this time!')
+            print('Sorry, computer(AI)\'s O won this time!')
             break
 
+        # check if player has won or not
         if not (isWinner(board, 'X')):
+            # get winning strong move from different algorithms!
             move = compMove()
             if move == -1:
                 print('Tie Game!')
@@ -151,11 +164,12 @@ def main():
                 print('Computer placed an \'O\' in position', move, ':')
                 printBoard(board)
         else:
-            print('Sorry, X\'s won this time! Good Job!')
+            print('Sorry, You X\'s won this time! Good Job!')
             break
 
     if isBoardFull(board):
         print('Game Tied!')
+    print(total_visited_states)
 
 
 main()
